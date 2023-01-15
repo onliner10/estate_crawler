@@ -81,6 +81,7 @@ executables:
     - utf8-string
     - GDirections
     - text
+    - monad-logger
 
 tests:
   estate-crawler-test:

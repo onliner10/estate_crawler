@@ -10,6 +10,8 @@ import qualified Google.Directions.Client    as GDC
 import           MigrateDbWorkflow           (migrateDbWorkflow)
 import           ScrapeGratkaWorkflow        (scrapeGratkaWorkflow)
 import           System.Environment          (getArgs, getEnv)
+import Control.Monad.Logger (LoggingT, runStdoutLoggingT, logWithoutLoc)
+import Control.Monad.Trans.Class (lift)
 
 getConnString :: IO ConnectionString
 getConnString = BSU.fromString <$> getEnv "CONNECTION_STRING"
@@ -23,23 +25,25 @@ withSqlConnection action = do
 
     runReaderT action connString
 
-withCommuteDeps :: ReaderT FillCommuteTimesWorkflowDeps IO () -> IO ()
+withCommuteDeps :: ReaderT FillCommuteTimesWorkflowDeps (LoggingT IO) () -> LoggingT IO ()
 withCommuteDeps action = do
-    connString <- getConnString
-    apiKey <- getDirectionsApiKey
+    connString <- lift getConnString
+    apiKey <- lift getDirectionsApiKey
     let deps = FillCommuteTimesWorkflowDeps connString apiKey
 
     runReaderT action deps
 
+runLogger :: LoggingT IO () -> IO ()
+runLogger = runStdoutLoggingT
+
 handleCommand :: String -> IO ()
 handleCommand "scrape-gratka" = withSqlConnection scrapeGratkaWorkflow
-handleCommand "fill-commute"  = withCommuteDeps fillCommuteTimesWorkflow
+handleCommand "fill-commute"  = runLogger $ withCommuteDeps fillCommuteTimesWorkflow
 handleCommand "migrate-db"    = withSqlConnection migrateDbWorkflow
 handleCommand x               = putStrLn $ "Unknown command: " ++ x
 
 main :: IO ()
 main = do
-    putStrLn "Starting"
     args <- getArgs
 
     mapM_ handleCommand args

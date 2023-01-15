@@ -68,7 +68,7 @@ offerToDto o =
             (Core.getTitle o) 
             (Core.getPrice o)
             (Core.getDescription o)
-            (Core.getLat <$> Core.getCoordinates address)
+            (Core.getLng <$> Core.getCoordinates address)
             (Core.getLat <$> Core.getCoordinates address)
             (Core.getStreet address)
             (Core.getDistrict address)

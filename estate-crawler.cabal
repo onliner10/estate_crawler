@@ -37,7 +37,7 @@ library
       Paths_estate_crawler
   hs-source-dirs:
       src
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -XOverloadedStrings -XTemplateHaskell -XQuasiQuotes -XTypeFamilies -XMultiParamTypeClasses -XGADTs -XGeneralizedNewtypeDeriving -XRecordWildCards -XFlexibleInstances -XDerivingStrategies -XStandaloneDeriving -XUndecidableInstances -XDataKinds
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -XOverloadedStrings -XTemplateHaskell -XQuasiQuotes -XTypeFamilies -XMultiParamTypeClasses -XGADTs -XGeneralizedNewtypeDeriving -XRecordWildCards -XFlexibleInstances -XDerivingStrategies -XStandaloneDeriving -XUndecidableInstances -XDataKinds -XTypeApplications
   build-depends:
       GDirections
     , aeson
@@ -45,10 +45,12 @@ library
     , bytestring
     , containers
     , errors
+    , esqueleto
     , monad-logger
     , mtl
     , persistent
     , persistent-postgresql
+    , persistent-spatial
     , regex-posix
     , scalpel
     , time
@@ -62,7 +64,7 @@ executable estate-crawler-exe
       Paths_estate_crawler
   hs-source-dirs:
       app
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -XOverloadedStrings -XTemplateHaskell -XQuasiQuotes -XTypeFamilies -XMultiParamTypeClasses -XGADTs -XGeneralizedNewtypeDeriving -XRecordWildCards -XFlexibleInstances -XDerivingStrategies -XStandaloneDeriving -XUndecidableInstances -XDataKinds -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -XOverloadedStrings -XTemplateHaskell -XQuasiQuotes -XTypeFamilies -XMultiParamTypeClasses -XGADTs -XGeneralizedNewtypeDeriving -XRecordWildCards -XFlexibleInstances -XDerivingStrategies -XStandaloneDeriving -XUndecidableInstances -XDataKinds -XTypeApplications -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       GDirections
     , base >=4.7 && <5
@@ -83,7 +85,7 @@ test-suite estate-crawler-test
       Paths_estate_crawler
   hs-source-dirs:
       test
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -XOverloadedStrings -XTemplateHaskell -XQuasiQuotes -XTypeFamilies -XMultiParamTypeClasses -XGADTs -XGeneralizedNewtypeDeriving -XRecordWildCards -XFlexibleInstances -XDerivingStrategies -XStandaloneDeriving -XUndecidableInstances -XDataKinds -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -XOverloadedStrings -XTemplateHaskell -XQuasiQuotes -XTypeFamilies -XMultiParamTypeClasses -XGADTs -XGeneralizedNewtypeDeriving -XRecordWildCards -XFlexibleInstances -XDerivingStrategies -XStandaloneDeriving -XUndecidableInstances -XDataKinds -XTypeApplications -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
     , estate-crawler

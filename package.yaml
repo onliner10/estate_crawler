@@ -45,6 +45,7 @@ ghc-options:
 - -XStandaloneDeriving
 - -XUndecidableInstances
 - -XDataKinds
+- -XTypeApplications
 
 library:
   source-dirs: src
@@ -60,6 +61,8 @@ library:
     - transformers
     - persistent
     - persistent-postgresql
+    - persistent-spatial
+    - esqueleto
     - time
     - monad-logger
     - GDirections

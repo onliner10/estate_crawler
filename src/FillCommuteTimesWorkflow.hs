@@ -1,12 +1,12 @@
 module FillCommuteTimesWorkflow (fillCommuteTimesWorkflow, FillCommuteTimesWorkflowDeps (FillCommuteTimesWorkflowDeps)) where
 import           Control.Monad.Cont          (MonadIO)
-import           Control.Monad.Logger        (LoggingT (LoggingT), runStdoutLoggingT, MonadLoggerIO (askLoggerIO), defaultLoc, LogLevel (LevelInfo, LevelError), MonadLogger (monadLoggerLog), logWithoutLoc, LogSource, ToLogStr)
+import           Control.Monad.Logger        (LoggingT, LogLevel (LevelInfo, LevelError), logWithoutLoc, LogSource)
 import           Control.Monad.Reader        (runReaderT)
 import           Control.Monad.Trans         (lift)
 import           Control.Monad.Trans.Reader  (ReaderT, ask)
 import qualified Core
 import           Database.Persist.Postgresql (ConnectionString, Entity (entityVal, entityKey),
-                                              SqlPersistT, selectList,
+                                              SqlPersistT,
                                               withPostgresqlConn)
 import qualified Google.Directions.Client    as GDC
 import qualified GoogleDirections            as GD
@@ -15,18 +15,15 @@ import Control.Monad.Trans.Maybe (runMaybeT, MaybeT (MaybeT))
 import Control.Monad (void, MonadPlus (mzero))
 import Core (GeoCoordinates(getLng))
 import Data.Time (UTCTime (UTCTime), fromGregorian, secondsToDiffTime)
-import PsqlPersistence (updateCommuteTime)
+import PsqlPersistence (updateCommuteTime, filterCommuteTime, getCachedCommuteTime)
 
 runAction :: ConnectionString -> SqlPersistT (LoggingT IO) a -> LoggingT IO a
 runAction connString action = withPostgresqlConn connString $ \backend -> runReaderT action backend
 
 getEstatesWithNoCommuteTimes :: (MonadIO m) => SqlPersistT m [Entity SQL.CommuteTimesViewDto]
-getEstatesWithNoCommuteTimes = selectList [SQL.filterCommuteTime Nothing] []
+getEstatesWithNoCommuteTimes = filterCommuteTime 
 
 data FillCommuteTimesWorkflowDeps = FillCommuteTimesWorkflowDeps{getConnString :: ConnectionString, getDirectionsApiKey:: GDC.ApiKey}
-
-hoistMaybe :: MonadPlus m => Maybe a -> MaybeT m a
-hoistMaybe = maybe mzero return
 
 hoistMaybe' :: Maybe a -> MaybeT (LoggingT IO) a
 hoistMaybe' = maybe mzero return
@@ -47,19 +44,21 @@ fillCommuteTime deps srcEntity = void $ runMaybeT $ do
         sourceCords = Core.GeoCoordinates { getLat = srcLat, getLng = srcLng }
         dstCoords = Core.GeoCoordinates { getLat = 52.22877808042894, getLng = 20.98412501166858 }
         apiKey = getDirectionsApiKey deps
+        connString = getConnString deps
 
     logWithoutLoc "FILL-COMMUTE" LevelInfo ("Searching route from:" ++ show sourceCords)
 
-    let directionsResponse = GD.getCommuteTime apiKey sourceCords dstCoords expectedArrival
-        loggedResponse = logEither "FILL-COMMUTE" directionsResponse 
-    commuteTime <- MaybeT loggedResponse
+    let getDirectionsFromApi = MaybeT $  logEither "FILL-COMMUTE" $ GD.getCommuteTime apiKey sourceCords dstCoords expectedArrival
+    let logGetFromCache x = logWithoutLoc "FILL-COMMUTE" LevelInfo ("Getting cached value for: " ++ show sourceCords ++ ": " ++ show x)
+    cachedCommute <- lift $ runAction connString $ getCachedCommuteTime 100 sourceCords
+
+    commuteTime <- maybe getDirectionsFromApi (\x -> logGetFromCache x >> return x) cachedCommute
 
     let 
         commuteTimeSeconds :: Int
         commuteTimeSeconds = round commuteTime
         commuteTimeMinutes = commuteTimeSeconds `div` 60
         updateAction = updateCommuteTime (entityKey srcEntity) commuteTimeMinutes
-        connString = getConnString deps
 
     lift $ runAction connString updateAction
 

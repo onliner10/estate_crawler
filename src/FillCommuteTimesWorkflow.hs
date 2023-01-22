@@ -40,7 +40,7 @@ fillCommuteTime deps srcEntity = void $ runMaybeT $ do
     srcLng <- hoistMaybe' $ SQL.commuteTimesViewDtoLng $ entityVal srcEntity
     
     let 
-        expectedArrival = UTCTime (fromGregorian 2023 1 16) (secondsToDiffTime 8 * 3600) 
+        expectedArrival = UTCTime (fromGregorian 2023 2 21) (secondsToDiffTime 8 * 3600) 
         sourceCords = Core.GeoCoordinates { getLat = srcLat, getLng = srcLng }
         dstCoords = Core.GeoCoordinates { getLat = 52.22877808042894, getLng = 20.98412501166858 }
         apiKey = getDirectionsApiKey deps
